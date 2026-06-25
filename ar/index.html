@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>NEXUS AR — Arquitetura Futurista</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Courier New', monospace; background: #000; overflow: hidden; }
+
+    /* ─── GUI OVERLAY ─── */
+    #overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      transition: opacity 0.8s ease;
+    }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .ov-logo {
+      font-size: 2.8rem; font-weight: 900; letter-spacing: 0.35em;
+      color: #00fff7;
+      text-shadow: 0 0 20px #00fff7, 0 0 60px #00fff7;
+      margin-bottom: 0.3rem;
+    }
+    .ov-sub {
+      font-size: 0.65rem; letter-spacing: 0.5em;
+      color: #ff00aa; text-shadow: 0 0 8px #ff00aa;
+      margin-bottom: 2.5rem;
+    }
+    .ov-divider {
+      width: 260px; height: 1px;
+      background: linear-gradient(90deg, transparent, #00fff7, transparent);
+      margin-bottom: 2rem;
+    }
+    .ov-concept {
+      max-width: 380px; text-align: center;
+      font-size: 0.75rem; line-height: 1.8;
+      color: rgba(0,255,247,0.7);
+      margin-bottom: 2rem;
+    }
+    .ov-concept strong { color: #00fff7; }
+
+    .ov-instructions {
+      max-width: 360px;
+      background: rgba(0,255,247,0.04);
+      border: 1px solid rgba(0,255,247,0.15);
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .ov-instructions h3 {
+      font-size: 0.6rem; letter-spacing: 0.4em;
+      color: #ff00aa; margin-bottom: 1rem;
+    }
+    .ov-instructions ol {
+      padding-left: 1.2rem;
+      font-size: 0.7rem; line-height: 2;
+      color: rgba(0,255,247,0.65);
+    }
+    .ov-instructions ol li { margin-bottom: 0.2rem; }
+
+    .ov-marker-wrap {
+      margin-bottom: 2rem; text-align: center;
+    }
+    .ov-marker-label {
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      color: rgba(0,255,247,0.4); margin-bottom: 0.7rem;
+    }
+    .ov-marker-img {
+      width: 100px; height: 100px;
+      border: 2px solid rgba(0,255,247,0.4);
+      image-rendering: pixelated;
+    }
+
+    .ov-btn {
+      padding: 0.85rem 3rem;
+      background: transparent;
+      border: 1px solid #00fff7;
+      color: #00fff7;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem; letter-spacing: 0.4em;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+    }
+    .ov-btn:hover {
+      background: rgba(0,255,247,0.08);
+      box-shadow: 0 0 30px rgba(0,255,247,0.3);
+    }
+
+    /* ─── HUD ─── */
+    #hud {
+      position: fixed; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 1.5rem;
+      pointer-events: none; z-index: 100;
+    }
+    .hud-label {
+      font-size: 0.58rem; letter-spacing: 0.25em;
+      color: rgba(0,255,247,0.55);
+      text-shadow: 0 0 5px #00fff7;
+    }
+    #status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #00fff7;
+      box-shadow: 0 0 8px #00fff7;
+      animation: blink 1.5s ease-in-out infinite;
+      display: inline-block; margin-right: 6px;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; } 50% { opacity: 0.2; }
+    }
+
+    .scanline {
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 2px,
+        rgba(0,255,247,0.012) 2px, rgba(0,255,247,0.012) 4px
+      );
+      pointer-events: none; z-index: 50;
+    }
+
+    #back-btn {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      z-index: 200; padding: 0.5rem 1.8rem;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(0,255,247,0.3);
+      color: rgba(0,255,247,0.6);
+      font-family: 'Courier New', monospace;
+      font-size: 0.6rem; letter-spacing: 0.25em;
+      cursor: pointer; text-decoration: none;
+      transition: all 0.3s;
+    }
+    #back-btn:hover {
+      border-color: #00fff7; color: #00fff7;
+      box-shadow: 0 0 15px rgba(0,255,247,0.2);
+    }
+
+    a-scene { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ─── GUI OVERLAY ─── -->
+<div id="overlay">
+  <div class="ov-logo">NEXUS AR</div>
+  <div class="ov-sub">AUGMENTED REALITY — CYBERPUNK ARCHITECTURE</div>
+  <div class="ov-divider"></div>
+
+  <p class="ov-concept">
+    <strong>NEXUS AR</strong> transporta uma estrutura de arquitetura futurista
+    para o teu espaço físico. Um <strong>drone de reconhecimento</strong> orbita
+    uma torre holográfica que emerge do marcador, pulsando com energia neon
+    numa realidade sobreposta ao mundo real.
+  </p>
+
+  <div class="ov-instructions">
+    <h3>// INSTRUÇÕES DE ATIVAÇÃO</h3>
+    <ol>
+      <li>Imprime ou exibe o marcador no ecrã abaixo</li>
+      <li>Clica em <strong>INICIAR</strong> para ativar a câmara</li>
+      <li>Aponta o telemóvel para o marcador NEXUS</li>
+      <li>A estrutura 3D materializa-se automaticamente</li>
+      <li>Move o telemóvel à volta para explorar o objeto</li>
+    </ol>
+  </div>
+
+  <div class="ov-marker-wrap">
+    <div class="ov-marker-label">// MARCADOR NEXUS — IMPRIME OU EXIBE</div>
+    <img class="ov-marker-img" src="../assets/markers/nexus-marker.png" alt="Marcador NEXUS AR" />
+  </div>
+
+  <button class="ov-btn" id="start-btn">⬡ INICIAR NEXUS AR</button>
+</div>
+
+<!-- ─── HUD ─── -->
+<div id="hud" style="display:none">
+  <span class="hud-label"><span id="status-dot"></span>AR ATIVO</span>
+  <span class="hud-label">NEXUS AR // v2.0</span>
+  <span class="hud-label">APONTA PARA O MARCADOR</span>
+</div>
+
+<div class="scanline"></div>
+<a href="../index.html" id="back-btn" style="display:none">← PORTAL</a>
+
+<!-- ─── A-FRAME AR SCENE ─── -->
+<a-scene
+  id="ar-scene"
+  embedded
+  arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+  renderer="antialias: true; alpha: true"
+  vr-mode-ui="enabled: false"
+  loading-screen="enabled: false"
+  style="display:none; width:100vw; height:100vh;">
+
+  <a-assets>
+    <!-- No external 3D models needed — all procedural -->
+  </a-assets>
+
+  <script>
+    /* ─── COMPONENT: neon-material ─── (based on force-red concept) */
+    AFRAME.registerComponent('neon-material', {
+      schema: {
+        color:     { type: 'color', default: '#00fff7' },
+        emissive:  { type: 'color', default: '#00fff7' },
+        opacity:   { default: 1.0 },
+        wireframe: { default: false }
+      },
+      init: function () {
+        this.el.addEventListener('loaded', () => this.applyMaterial());
+        this.applyMaterial();
+      },
+      applyMaterial: function () {
+        const mesh = this.el.getObject3D('mesh');
+        if (!mesh) return;
+        mesh.traverse(node => {
+          if (node.isMesh && node.material) {
+            node.material.color.set(this.data.color);
+            node.material.emissive.set(this.data.emissive);
+            node.material.emissiveIntensity = 0.6;
+            node.material.opacity = this.data.opacity;
+            node.material.transparent = this.data.opacity < 1;
+            node.material.wireframe = this.data.wireframe;
+            node.material.needsUpdate = true;
+          }
+        });
+      }
+    });
+
+    /* ─── COMPONENT: orbit-drone ─── (tick-based autonomous kinematics) */
+    AFRAME.registerComponent('orbit-drone', {
+      schema: {
+        radius:    { default: 0.35 },
+        speed:     { default: 0.8 },
+        yOffset:   { default: 0.25 },
+        bobAmp:    { default: 0.05 },
+        bobSpeed:  { default: 2.0 },
+        tiltAmp:   { default: 12 }
+      },
+      init: function () {
+        this.angle = Math.random() * Math.PI * 2;
+        this.t = 0;
+      },
+      tick: function (time, delta) {
+        if (!delta) return;
+        const dt = delta / 1000;
+        this.angle += dt * this.data.speed;
+        this.t     += dt;
+
+        const d = this.data;
+        const x = Math.cos(this.angle) * d.radius;
+        const z = Math.sin(this.angle) * d.radius;
+        const y = d.yOffset + Math.sin(this.t * d.bobSpeed) * d.bobAmp;
+
+        this.el.object3D.position.set(x, y, z);
+
+        // face direction of travel + tilt
+        const heading = Math.atan2(
+          -Math.cos(this.angle),
+           Math.sin(this.angle)
+        );
+        this.el.object3D.rotation.y = heading;
+        this.el.object3D.rotation.z = Math.sin(this.t * d.bobSpeed) * THREE.MathUtils.degToRad(d.tiltAmp);
+      }
+    });
+
+    /* ─── COMPONENT: tower-pulse ─── (pulsing scale + color oscillation) */
+    AFRAME.registerComponent('tower-pulse', {
+      schema: {
+        speed:    { default: 1.5 },
+        minScale: { default: 0.97 },
+        maxScale: { default: 1.03 }
+      },
+      init: function () {
+        this.t = 0;
+        this.baseColor = new THREE.Color('#00fff7');
+        this.altColor  = new THREE.Color('#7700ff');
+      },
+      tick: function (time, delta) {
+        if (!delta) return;
+        this.t += delta * 0.001 * this.data.speed;
+        const s = this.data.minScale + (this.data.maxScale - this.data.minScale) *
+                  (0.5 + 0.5 * Math.sin(this.t));
+        this.el.object3D.scale.set(s, 1, s);
+
+        // Oscillate emissive color on mesh
+        const mesh = this.el.getObject3D('mesh');
+        if (mesh) {
+          const alpha = 0.5 + 0.5 * Math.sin(this.t * 0.7);
+          const col = this.baseColor.clone().lerp(this.altColor, alpha);
+          mesh.traverse(n => {
+            if (n.isMesh && n.material) {
+              n.material.emissive.copy(col);
+              n.material.needsUpdate = true;
+            }
+          });
+        }
+      }
+    });
+
+    /* ─── COMPONENT: ring-spin ─── (autonomous ring rotation) */
+    AFRAME.registerComponent('ring-spin', {
+      schema: {
+        speedX: { default: 0 },
+        speedY: { default: 1 },
+        speedZ: { default: 0 }
+      },
+      tick: function (time, delta) {
+        if (!delta) return;
+        const dt = delta * 0.001;
+        const r = this.el.object3D.rotation;
+        r.x += dt * this.data.speedX;
+        r.y += dt * this.data.speedY;
+        r.z += dt * this.data.speedZ;
+      }
+    });
+  </script>
+
+  <!-- ─── AR MARKER ─── -->
+  <a-marker type="pattern" url="../assets/markers/nexus.patt" smooth="true" smoothCount="10" smoothTolerance="0.01">
+
+    <!-- === NEXUS TOWER === -->
+    <!-- Base platform -->
+    <a-cylinder radius="0.22" height="0.015" position="0 0.007 0"
+      color="#001233"
+      neon-material="color: #00fff7; emissive: #00fff7; opacity: 0.85"
+      tower-pulse="speed: 1.2">
+    </a-cylinder>
+
+    <!-- Platform ring -->
+    <a-torus radius="0.22" radius-tubular="0.008" position="0 0.015 0" rotation="90 0 0"
+      color="#00fff7"
+      neon-material="color: #00fff7; emissive: #00fff7"
+      ring-spin="speedY: 0.4">
+    </a-torus>
+
+    <!-- Main tower body -->
+    <a-box width="0.07" height="0.55" depth="0.07" position="0 0.29 0"
+      color="#001233"
+      neon-material="color: #001233; emissive: #003366; wireframe: false">
+    </a-box>
+
+    <!-- Tower wireframe overlay -->
+    <a-box width="0.075" height="0.56" depth="0.075" position="0 0.29 0"
+      color="#00fff7"
+      neon-material="color: #00fff7; emissive: #00fff7; wireframe: true; opacity: 0.6">
+    </a-box>
+
+    <!-- Mid ring -->
+    <a-torus radius="0.08" radius-tubular="0.007" position="0 0.25 0" rotation="90 0 0"
+      color="#ff00aa"
+      neon-material="color: #ff00aa; emissive: #ff00aa"
+      ring-spin="speedY: -1.2; speedX: 0.3">
+    </a-torus>
+
+    <!-- Upper ring -->
+    <a-torus radius="0.06" radius-tubular="0.006" position="0 0.45 0" rotation="90 0 0"
+      color="#7700ff"
+      neon-material="color: #7700ff; emissive: #7700ff"
+      ring-spin="speedY: 2; speedZ: 0.5">
+    </a-torus>
+
+    <!-- Tower apex -->
+    <a-cone radius-bottom="0.04" radius-top="0.005" height="0.12" position="0 0.63 0"
+      color="#00fff7"
+      neon-material="color: #00fff7; emissive: #00fff7"
+      tower-pulse="speed: 3; minScale: 0.9; maxScale: 1.1">
+    </a-cone>
+
+    <!-- Apex energy sphere -->
+    <a-sphere radius="0.025" position="0 0.7 0"
+      color="#00fff7"
+      neon-material="color: #00fff7; emissive: #00fff7"
+      tower-pulse="speed: 4">
+    </a-sphere>
+
+    <!-- Side spires (4x) -->
+    <a-cone radius-bottom="0.018" radius-top="0.002" height="0.18" position=" 0.09 0.13 0" rotation="0 0 -15"
+      color="#ff00aa" neon-material="color: #ff00aa; emissive: #ff00aa">
+    </a-cone>
+    <a-cone radius-bottom="0.018" radius-top="0.002" height="0.18" position="-0.09 0.13 0" rotation="0 0  15"
+      color="#ff00aa" neon-material="color: #ff00aa; emissive: #ff00aa">
+    </a-cone>
+    <a-cone radius-bottom="0.018" radius-top="0.002" height="0.18" position="0 0.13  0.09" rotation="-15 0 0"
+      color="#ff00aa" neon-material="color: #ff00aa; emissive: #ff00aa">
+    </a-cone>
+    <a-cone radius-bottom="0.018" radius-top="0.002" height="0.18" position="0 0.13 -0.09" rotation=" 15 0 0"
+      color="#ff00aa" neon-material="color: #ff00aa; emissive: #ff00aa">
+    </a-cone>
+
+    <!-- Large outer orbit ring -->
+    <a-torus radius="0.35" radius-tubular="0.006" position="0 0.2 0" rotation="75 0 0"
+      color="#00fff7"
+      neon-material="color: #00fff7; emissive: #00fff7; opacity: 0.5"
+      ring-spin="speedY: 0.6">
+    </a-torus>
+
+    <!-- === DRONE 1 (cyan) === -->
+    <a-entity orbit-drone="radius: 0.32; speed: 1.1; yOffset: 0.25; bobAmp: 0.04; bobSpeed: 2.2">
+      <a-box width="0.04" height="0.015" depth="0.025"
+        color="#00fff7"
+        neon-material="color: #00fff7; emissive: #00fff7">
+      </a-box>
+      <!-- Drone rotors (2 tiny boxes) -->
+      <a-box width="0.025" height="0.006" depth="0.006" position=" 0.025 0.01 0"
+        color="#ffffff" neon-material="color: #ffffff; emissive: #aaaaaa">
+      </a-box>
+      <a-box width="0.025" height="0.006" depth="0.006" position="-0.025 0.01 0"
+        color="#ffffff" neon-material="color: #ffffff; emissive: #aaaaaa">
+      </a-box>
+    </a-entity>
+
+    <!-- === DRONE 2 (magenta, opposite orbit) === -->
+    <a-entity orbit-drone="radius: 0.28; speed: -0.7; yOffset: 0.35; bobAmp: 0.06; bobSpeed: 1.8; tiltAmp: 15">
+      <a-box width="0.04" height="0.015" depth="0.025"
+        color="#ff00aa"
+        neon-material="color: #ff00aa; emissive: #ff00aa">
+      </a-box>
+      <a-box width="0.025" height="0.006" depth="0.006" position=" 0.025 0.01 0"
+        color="#ffffff" neon-material="color: #ffffff; emissive: #aaaaaa">
+      </a-box>
+      <a-box width="0.025" height="0.006" depth="0.006" position="-0.025 0.01 0"
+        color="#ffffff" neon-material="color: #ffffff; emissive: #aaaaaa">
+      </a-box>
+    </a-entity>
+
+    <!-- === DRONE 3 (purple, tilted orbit) === -->
+    <a-entity orbit-drone="radius: 0.38; speed: 0.5; yOffset: 0.15; bobAmp: 0.08; bobSpeed: 3; tiltAmp: 20">
+      <a-box width="0.035" height="0.012" depth="0.02"
+        color="#7700ff"
+        neon-material="color: #7700ff; emissive: #7700ff">
+      </a-box>
+    </a-entity>
+
+    <!-- === FLOATING DATA SHARDS === -->
+    <!-- Shard 1 -->
+    <a-entity orbit-drone="radius: 0.18; speed: 2.5; yOffset: 0.5; bobAmp: 0.03; bobSpeed: 4">
+      <a-box width="0.02" height="0.04" depth="0.02" rotation="30 45 0"
+        color="#00fff7"
+        neon-material="color: #00fff7; emissive: #00fff7; wireframe: true">
+      </a-box>
+    </a-entity>
+
+    <!-- Shard 2 -->
+    <a-entity orbit-drone="radius: 0.15; speed: -3; yOffset: 0.6; bobAmp: 0.02; bobSpeed: 5; tiltAmp: 5">
+      <a-box width="0.015" height="0.03" depth="0.015" rotation="15 0 60"
+        color="#ff00aa"
+        neon-material="color: #ff00aa; emissive: #ff00aa; wireframe: true">
+      </a-box>
+    </a-entity>
+
+    <!-- Label text -->
+    <a-text value="NEXUS TOWER" position="0 0.82 0" align="center"
+      color="#00fff7" width="0.8" rotation="0 0 0">
+    </a-text>
+
+  </a-marker>
+
+  <!-- Static camera for AR -->
+  <a-entity camera></a-entity>
+
+</a-scene>
+
+<script>
+  const overlay   = document.getElementById('overlay');
+  const startBtn  = document.getElementById('start-btn');
+  const arScene   = document.getElementById('ar-scene');
+  const hud       = document.getElementById('hud');
+  const backBtn   = document.getElementById('back-btn');
+
+  startBtn.addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    setTimeout(() => {
+      overlay.remove();
+      arScene.style.display = 'block';
+      hud.style.display = 'flex';
+      backBtn.style.display = 'block';
+    }, 800);
+  });
+</script>
+</body>
+</html>

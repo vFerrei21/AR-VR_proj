@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — XR Portal</title>
+  <style>
+    :root {
+      --cyan:    #00fff7;
+      --magenta: #ff00aa;
+      --purple:  #7700ff;
+      --orange:  #ff6600;
+      --bg:      #000814;
+      --bg2:     #000d1a;
+      --mono:    'Courier New', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: rgba(0,255,247,0.85);
+      font-family: var(--mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── SCANLINES ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 2px,
+        rgba(0,255,247,0.012) 2px, rgba(0,255,247,0.012) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ─── GRID BACKGROUND ─── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(0,255,247,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,247,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid rgba(0,255,247,0.1);
+      background: rgba(0,8,20,0.85);
+      backdrop-filter: blur(10px);
+    }
+    .nav-logo {
+      font-size: 1rem; font-weight: 900; letter-spacing: 0.4em;
+      color: var(--cyan);
+      text-shadow: 0 0 15px var(--cyan);
+    }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      color: rgba(0,255,247,0.5);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--cyan); }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+    }
+
+    .hero-tag {
+      font-size: 0.6rem; letter-spacing: 0.5em;
+      color: var(--magenta); text-shadow: 0 0 8px var(--magenta);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 900; letter-spacing: 0.25em;
+      line-height: 0.9;
+      color: var(--cyan);
+      text-shadow:
+        0 0 20px var(--cyan),
+        0 0 60px rgba(0,255,247,0.4),
+        0 0 120px rgba(0,255,247,0.15);
+      margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.65rem, 2vw, 0.85rem);
+      letter-spacing: 0.35em;
+      color: rgba(0,255,247,0.4);
+      margin-bottom: 3rem;
+    }
+
+    .hero-desc {
+      max-width: 520px;
+      font-size: 0.78rem; line-height: 2;
+      color: rgba(0,255,247,0.6);
+      margin-bottom: 3rem;
+    }
+
+    .hero-desc strong { color: var(--cyan); }
+
+    .hero-cta-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+    .btn-primary {
+      padding: 0.9rem 2.5rem;
+      background: transparent;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 0.72rem; letter-spacing: 0.3em;
+      text-decoration: none;
+      transition: all 0.3s;
+      text-transform: uppercase;
+    }
+    .btn-primary:hover {
+      background: rgba(0,255,247,0.08);
+      box-shadow: 0 0 30px rgba(0,255,247,0.25);
+    }
+    .btn-secondary {
+      padding: 0.9rem 2.5rem;
+      background: transparent;
+      border: 1px solid var(--magenta);
+      color: var(--magenta);
+      font-family: var(--mono);
+      font-size: 0.72rem; letter-spacing: 0.3em;
+      text-decoration: none;
+      transition: all 0.3s;
+      text-transform: uppercase;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,0,170,0.08);
+      box-shadow: 0 0 30px rgba(255,0,170,0.25);
+    }
+
+    /* scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 2rem;
+      font-size: 0.55rem; letter-spacing: 0.4em;
+      color: rgba(0,255,247,0.3);
+      animation: fadeUpDown 2s ease-in-out infinite;
+    }
+    @keyframes fadeUpDown {
+      0%,100% { transform: translateY(0); opacity: 0.3; }
+      50%      { transform: translateY(6px); opacity: 0.7; }
+    }
+
+    /* ─── SECTION COMMON ─── */
+    section {
+      position: relative; z-index: 1;
+      padding: 6rem 2rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    .section-tag {
+      font-size: 0.55rem; letter-spacing: 0.5em;
+      color: var(--magenta); text-shadow: 0 0 6px var(--magenta);
+      margin-bottom: 0.8rem;
+    }
+    .section-title {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900; letter-spacing: 0.2em;
+      color: var(--cyan);
+      text-shadow: 0 0 15px rgba(0,255,247,0.3);
+      margin-bottom: 1rem;
+    }
+    .section-lead {
+      font-size: 0.78rem; line-height: 1.9;
+      color: rgba(0,255,247,0.55);
+      max-width: 600px; margin-bottom: 3rem;
+    }
+
+    /* ─── PROJECT CARDS ─── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2px;
+    }
+
+    .project-card {
+      position: relative;
+      padding: 2.5rem;
+      background: rgba(0,255,247,0.02);
+      border: 1px solid rgba(0,255,247,0.1);
+      transition: all 0.4s;
+      overflow: hidden;
+    }
+    .project-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+    .project-card:hover::before { transform: scaleX(1); }
+    .project-card:hover {
+      background: rgba(0,255,247,0.04);
+      box-shadow: 0 0 40px rgba(0,255,247,0.07);
+    }
+    .project-card.magenta::before {
+      background: linear-gradient(90deg, transparent, var(--magenta), transparent);
+    }
+    .project-card.magenta:hover { box-shadow: 0 0 40px rgba(255,0,170,0.07); }
+
+    .card-num {
+      font-size: 0.55rem; letter-spacing: 0.5em;
+      color: rgba(0,255,247,0.3);
+      margin-bottom: 1.2rem;
+    }
+    .card-num.m { color: rgba(255,0,170,0.3); }
+
+    .card-icon {
+      font-size: 2.5rem; margin-bottom: 1rem;
+      filter: drop-shadow(0 0 10px var(--cyan));
+    }
+    .card-icon.m { filter: drop-shadow(0 0 10px var(--magenta)); }
+
+    .card-title {
+      font-size: 1.1rem; font-weight: 900; letter-spacing: 0.2em;
+      color: var(--cyan); margin-bottom: 0.4rem;
+    }
+    .card-title.m { color: var(--magenta); }
+
+    .card-sub {
+      font-size: 0.58rem; letter-spacing: 0.3em;
+      color: rgba(0,255,247,0.4); margin-bottom: 1.2rem;
+    }
+    .card-sub.m { color: rgba(255,0,170,0.4); }
+
+    .card-desc {
+      font-size: 0.72rem; line-height: 1.9;
+      color: rgba(0,255,247,0.55); margin-bottom: 1.5rem;
+    }
+
+    .card-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+    .tag {
+      font-size: 0.55rem; letter-spacing: 0.2em;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid rgba(0,255,247,0.2);
+      color: rgba(0,255,247,0.5);
+    }
+    .tag.m { border-color: rgba(255,0,170,0.2); color: rgba(255,0,170,0.5); }
+
+    .card-link {
+      display: inline-block;
+      padding: 0.65rem 1.8rem;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .card-link:hover {
+      background: rgba(0,255,247,0.08);
+      box-shadow: 0 0 20px rgba(0,255,247,0.2);
+    }
+    .card-link.m { border-color: var(--magenta); color: var(--magenta); }
+    .card-link.m:hover {
+      background: rgba(255,0,170,0.08);
+      box-shadow: 0 0 20px rgba(255,0,170,0.2);
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      position: relative; z-index: 1;
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,255,247,0.15), transparent);
+      margin: 0;
+    }
+
+    /* ─── FEATURES / TECH GRID ─── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: rgba(0,255,247,0.06);
+      border: 1px solid rgba(0,255,247,0.06);
+    }
+    .tech-item {
+      padding: 2rem 1.5rem;
+      background: var(--bg);
+    }
+    .tech-item h4 {
+      font-size: 0.65rem; letter-spacing: 0.3em;
+      color: var(--cyan); margin-bottom: 0.5rem;
+    }
+    .tech-item p {
+      font-size: 0.65rem; line-height: 1.7;
+      color: rgba(0,255,247,0.4);
+    }
+
+    /* ─── CONCEPT SECTION ─── */
+    .concept-block {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem;
+      align-items: center;
+    }
+    @media (max-width: 680px) { .concept-block { grid-template-columns: 1fr; gap: 2rem; } }
+
+    .concept-text p {
+      font-size: 0.75rem; line-height: 2;
+      color: rgba(0,255,247,0.55);
+      margin-bottom: 1rem;
+    }
+    .concept-text strong { color: var(--cyan); }
+
+    .concept-art {
+      position: relative;
+      height: 280px;
+      border: 1px solid rgba(0,255,247,0.1);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .concept-art svg { width: 100%; height: 100%; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position: relative; z-index: 1;
+      padding: 3rem 2rem;
+      border-top: 1px solid rgba(0,255,247,0.08);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-copy {
+      font-size: 0.58rem; letter-spacing: 0.2em;
+      color: rgba(0,255,247,0.25);
+    }
+    .footer-tech {
+      font-size: 0.55rem; letter-spacing: 0.2em;
+      color: rgba(0,255,247,0.2);
+    }
+
+    /* Responsive nav */
+    @media (max-width: 500px) {
+      .nav-links { display: none; }
+      .hero-title { letter-spacing: 0.1em; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-logo">NEXUS</div>
+  <div class="nav-links">
+    <a href="#projects">PROJETOS</a>
+    <a href="#conceito">CONCEITO</a>
+    <a href="#tecnologia">TECNOLOGIA</a>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<div class="hero">
+  <p class="hero-tag">// EXTENDED REALITY PORTFOLIO</p>
+  <h1 class="hero-title">NEXUS</h1>
+  <p class="hero-subtitle">ARQUITETURA FUTURISTA — CYBERPUNK IMMERSIVE EXPERIENCES</p>
+  <p class="hero-desc">
+    Dois universos XR construídos à volta de uma inquietação: <strong>como será a
+    arquitetura nas metrópoles distópicas do futuro?</strong>
+    Explora sectores abandonados em VR 360° ou materializa uma torre neon
+    no teu espaço físico com AR.
+  </p>
+  <div class="hero-cta-group">
+    <a href="vr/index.html" class="btn-primary">⬡ ENTRAR NO VR</a>
+    <a href="ar/index.html" class="btn-secondary">⬡ ATIVAR AR</a>
+  </div>
+  <p class="scroll-hint">↓ EXPLORAR</p>
+</div>
+
+<hr class="divider" />
+
+<!-- ─── PROJECTS ─── -->
+<section id="projects">
+  <p class="section-tag">// 01 — PROJETOS</p>
+  <h2 class="section-title">EXPERIÊNCIAS IMERSIVAS</h2>
+  <p class="section-lead">
+    Dois modos de explorar a arquitetura cyberpunk — um mergulho total em
+    realidade virtual e uma sobreposição de realidade aumentada no teu espaço.
+  </p>
+
+  <div class="projects-grid">
+
+    <!-- CARD VR -->
+    <div class="project-card">
+      <p class="card-num">// PROJETO A</p>
+      <div class="card-icon">🕶️</div>
+      <h3 class="card-title">VISOR 360 VR</h3>
+      <p class="card-sub">NAVEGAÇÃO IMERSIVA POR GAZE</p>
+      <p class="card-desc">
+        Três sectores de uma metrópole cyberpunk para explorar — The Core,
+        Megacity Grid e Neon Wasteland. Navega entre os mundos apenas
+        olhando para os portais de teletransporte.
+        Componentes JavaScript customizados controlam todas as transições,
+        animações e lógica de visibilidade.
+      </p>
+      <div class="card-tags">
+        <span class="tag">A-FRAME 1.5</span>
+        <span class="tag">GAZE CURSOR</span>
+        <span class="tag">JS COMPONENTS</span>
+        <span class="tag">3 AMBIENTES</span>
+        <span class="tag">HOTSPOTS</span>
+      </div>
+      <a href="vr/index.html" class="card-link">→ ENTRAR NO VR</a>
+    </div>
+
+    <!-- CARD AR -->
+    <div class="project-card magenta">
+      <p class="card-num m">// PROJETO B</p>
+      <div class="card-icon m">✈️</div>
+      <h3 class="card-title m">NEXUS AR</h3>
+      <p class="card-sub m">REALIDADE AUMENTADA POR MARCADOR</p>
+      <p class="card-desc">
+        Uma torre neon holográfica emerge do marcador NEXUS no teu espaço físico.
+        Três drones com cinemática autónoma orbitam a estrutura.
+        Materiais controlados por código pulsam e mudam de cor em tempo real.
+        GUI de introdução com instruções e download do marcador.
+      </p>
+      <div class="card-tags">
+        <span class="tag m">AR.JS</span>
+        <span class="tag m">MARCADOR .PATT</span>
+        <span class="tag m">TICK KINEMATICS</span>
+        <span class="tag m">GUI OVERLAY</span>
+        <span class="tag m">NEON MATERIALS</span>
+      </div>
+      <a href="ar/index.html" class="card-link m">→ ATIVAR AR</a>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ─── CONCEITO ─── -->
+<section id="conceito">
+  <p class="section-tag">// 02 — CONCEITO</p>
+  <h2 class="section-title">A INQUIETAÇÃO</h2>
+
+  <div class="concept-block">
+    <div class="concept-text">
+      <p>
+        <strong>NEXUS</strong> parte de uma pergunta sobre o futuro das cidades:
+        quando a densidade urbana, a automação e a desigualdade se combinam,
+        que arquitectura sobra?
+      </p>
+      <p>
+        O projeto explora três estados de uma metrópole distópica — o núcleo
+        de poder tecnológico (<strong>The Core</strong>), a grelha infinita de
+        habitação em camadas (<strong>Megacity Grid</strong>) e as zonas
+        abandonadas onde a infraestrutura colapsou
+        (<strong>Neon Wasteland</strong>).
+      </p>
+      <p>
+        Em AR, a mesma linguagem visual — neon sobre escuridão, wireframe como
+        metáfora da sociedade que vê a estrutura mas não o conteúdo — materializa-se
+        sobre o espaço real do utilizador.
+      </p>
+    </div>
+
+    <!-- Decorative SVG diagram -->
+    <div class="concept-art">
+      <svg viewBox="0 0 300 280" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid -->
+        <defs>
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,255,247,0.07)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="300" height="280" fill="url(#grid)"/>
+
+        <!-- Tower silhouette wireframe -->
+        <rect x="130" y="200" width="40" height="70" fill="none" stroke="#00fff7" stroke-width="0.8" opacity="0.5"/>
+        <rect x="120" y="150" width="60" height="55" fill="none" stroke="#00fff7" stroke-width="0.8" opacity="0.4"/>
+        <rect x="135" y="80" width="30" height="75" fill="none" stroke="#00fff7" stroke-width="1" opacity="0.6"/>
+        <polygon points="150,20 125,80 175,80" fill="none" stroke="#00fff7" stroke-width="1" opacity="0.7"/>
+        <!-- Apex glow -->
+        <circle cx="150" cy="20" r="4" fill="#00fff7" opacity="0.9"/>
+        <circle cx="150" cy="20" r="10" fill="none" stroke="#00fff7" stroke-width="0.5" opacity="0.4"/>
+
+        <!-- Side spires -->
+        <line x1="120" y1="150" x2="95" y2="120" stroke="#ff00aa" stroke-width="0.8" opacity="0.6"/>
+        <line x1="180" y1="150" x2="205" y2="120" stroke="#ff00aa" stroke-width="0.8" opacity="0.6"/>
+
+        <!-- Orbit rings -->
+        <ellipse cx="150" cy="160" rx="55" ry="12" fill="none" stroke="#00fff7" stroke-width="0.7" stroke-dasharray="4,3" opacity="0.35"/>
+        <ellipse cx="150" cy="140" rx="70" ry="15" fill="none" stroke="#ff00aa" stroke-width="0.7" stroke-dasharray="4,4" opacity="0.3"/>
+
+        <!-- Drone dots -->
+        <circle cx="205" cy="160" r="3" fill="#00fff7" opacity="0.8"/>
+        <circle cx="95" cy="140" r="3" fill="#ff00aa" opacity="0.8"/>
+        <circle cx="220" cy="140" r="2" fill="#7700ff" opacity="0.7"/>
+
+        <!-- Labels -->
+        <text x="150" y="265" text-anchor="middle" fill="rgba(0,255,247,0.3)" font-size="7" font-family="Courier New" letter-spacing="3">NEXUS TOWER // AR</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ─── TECNOLOGIA ─── -->
+<section id="tecnologia">
+  <p class="section-tag">// 03 — TECNOLOGIA</p>
+  <h2 class="section-title">STACK TÉCNICO</h2>
+  <p class="section-lead">Construído sobre standards abertos. Zero dependências de servidor.</p>
+
+  <div class="tech-grid">
+    <div class="tech-item">
+      <h4>A-FRAME 1.5</h4>
+      <p>Framework WebXR declarativo. Cenas em HTML, lógica em JavaScript puro.</p>
+    </div>
+    <div class="tech-item">
+      <h4>AR.JS</h4>
+      <p>Biblioteca de AR baseada em marcador. Deteção por padrão .patt customizado.</p>
+    </div>
+    <div class="tech-item">
+      <h4>COMPONENTES JS</h4>
+      <p>env-manager, orbit-drone, neon-material, tower-pulse — todos escritos de raiz.</p>
+    </div>
+    <div class="tech-item">
+      <h4>TICK KINEMATICS</h4>
+      <p>Movimento dos drones calculado matematicamente por frame. Sem animações pré-feitas.</p>
+    </div>
+    <div class="tech-item">
+      <h4>GITHUB PAGES</h4>
+      <p>Deploy em HTTPS — obrigatório para câmara e giroscópio em dispositivos móveis.</p>
+    </div>
+    <div class="tech-item">
+      <h4>THREE.JS</h4>
+      <p>Manipulação direta de materiais Three.js para efeitos neon dinâmicos em runtime.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <span class="footer-copy">© 2025 NEXUS XR PROJECT — ARQUITETURA FUTURISTA</span>
+  <span class="footer-tech">A-FRAME · AR.JS · GITHUB PAGES</span>
+</footer>
+
+</body>
+</html>
