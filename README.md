@@ -35,10 +35,6 @@ nexus-xr/
 
 ---
 
-## 🔗 Links Diretos (GitHub Pages)
-
-> Substitui `SEU-USER` e `SEU-REPO` pelos teus dados após publicação.
-
 | Página |
 |---|---|
 | 🏠 Portal Principal |
@@ -71,7 +67,7 @@ Visor imersivo com três ambientes panorâmicos de uma metrópole distópica:
 3. Olha para os **portais toroidal** (anel brilhante) durante ~1.5 segundos
 4. O cursor muda de cor ciano → magenta durante o fuse
 5. Navega pelos 3 sectores
-6. Em mobile: usa giroscópio para olhar à volta; usa WASD no desktop
+
 
 ---
 
@@ -83,7 +79,7 @@ Uma torre neon holográfica cyberpunk materializa-se sobre o marcador NEXUS. Tr�
 ### Marcador
 - Ficheiro: `assets/markers/nexus-marker.png`
 - Imprime ou exibe no ecrã de outro dispositivo
-- Tamanho recomendado: mínimo 8×8 cm impresso
+
 
 ### Componentes JavaScript Criados
 - **`orbit-drone`** — Cinemática autónoma via `tick`: órbita circular + bobbing sinusoidal + inclinação de viragem. Parâmetros: raio, velocidade, offset vertical, amplitude de bobbing
@@ -99,19 +95,6 @@ Uma torre neon holográfica cyberpunk materializa-se sobre o marcador NEXUS. Tr�
 5. Aponta para o marcador `nexus-marker.png` (impresso ou no ecrã)
 6. A torre NEXUS aparece — move o telemóvel à volta para ver todos os ângulos
 
----
-
-## ⚙️ Publicação — GitHub Pages
-
-### Passos
-```bash
-# 1. Cria repositório no GitHub (público)
-# 2. Faz upload de todos os ficheiros mantendo a estrutura de pastas
-# 3. Vai a Settings > Pages > Source: Deploy from branch > main / root
-# 4. Aguarda ~2 minutos
-# 5. Acede a https://SEU-USER.github.io/SEU-REPO/
-```
----
 
 ## 🎨 Identidade Visual
 
