@@ -10,7 +10,6 @@
     <!-- AR.js -->
     <script src="https://cdn.jsdelivr.net/npm/ar.js@2.2.2/aframe/build/aframe-ar.js"></script>
 
-    <!-- Estilos do portfólio (base que funciona) -->
     <style>
         :root {
             --bg-color: #0a0a0c;
@@ -82,10 +81,11 @@
             padding: 1.5rem;
             margin-bottom: 2rem;
             backdrop-filter: blur(12px);
+            max-width: 300px;
         }
         .marker-container img {
-            width: 150px;
-            height: 150px;
+            width: 200px;
+            height: 200px;
             border: 2px solid var(--accent-ar);
             border-radius: 8px;
             image-rendering: pixelated;
@@ -211,6 +211,12 @@
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
         }
+
+        .tip {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -221,9 +227,9 @@
         <p class="subtitle">Arquitetura Futurista em Realidade Aumentada</p>
 
         <div class="marker-container">
-            <!-- Marcador HIRO (gerado por SVG) -->
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='white'/%3E%3Crect x='20' y='20' width='160' height='160' fill='black'/%3E%3Crect x='40' y='40' width='120' height='120' fill='white'/%3E%3Crect x='60' y='60' width='80' height='80' fill='black'/%3E%3Crect x='80' y='80' width='40' height='40' fill='white'/%3E%3C/svg%3E" alt="Marcador HIRO" />
-            <p class="label">📌 Imprime ou exibe este marcador (HIRO)</p>
+            <p class="label">📌 Marcador HIRO (imprime ou mostra no ecrã)</p>
+            <p class="tip">💡 Também podes usar o <strong>BARCODE (value=0)</strong> (recomendado)</p>
         </div>
 
         <button id="start-btn" class="btn">▶ INICIAR EXPERIÊNCIA AR</button>
@@ -242,20 +248,15 @@
     <div id="markerStatus" class="marker-status">🏛️ TORRE NEXUS ENCONTRADA!</div>
 
     <!-- ─── CENA AR (AR.js) ─── -->
-    <div id="ar-container">
-        <!-- A cena será injetada aqui pelo JavaScript -->
-    </div>
+    <div id="ar-container"></div>
 
-    <!-- ─── SCRIPTS (componentes personalizados) ─── -->
     <script>
-        // ─── REGISTAR COMPONENTES A-FRAME ───
+        // ─── HELPER: degToRad para A-Frame 1.2.0 ───
+        function degToRad(deg) { return deg * Math.PI / 180; }
 
-        // Helper: degToRad (para compatibilidade com A-Frame 1.2.0)
-        function degToRad(deg) {
-            return deg * Math.PI / 180;
-        }
+        // ─── REGISTAR COMPONENTES ───
 
-        // neon-material (adaptado para A-Frame 1.2.0)
+        // neon-material
         AFRAME.registerComponent('neon-material', {
             schema: {
                 color:     { type: 'color', default: '#00fff7' },
@@ -284,7 +285,7 @@
             }
         });
 
-        // orbit-drone (com degToRad)
+        // orbit-drone
         AFRAME.registerComponent('orbit-drone', {
             schema: {
                 radius:    { default: 0.35 },
@@ -311,10 +312,7 @@
 
                 this.el.object3D.position.set(x, y, z);
 
-                const heading = Math.atan2(
-                    -Math.cos(this.angle),
-                     Math.sin(this.angle)
-                );
+                const heading = Math.atan2(-Math.cos(this.angle), Math.sin(this.angle));
                 this.el.object3D.rotation.y = heading;
                 this.el.object3D.rotation.z = Math.sin(this.t * d.bobSpeed) * degToRad(d.tiltAmp);
             }
@@ -370,7 +368,7 @@
             }
         });
 
-        // ─── DETECTOR DE MARCADOR (AR.js) ───
+        // ─── DETECTOR DE MARCADOR ───
         AFRAME.registerComponent('marker-detector', {
             init: function() {
                 const statusDiv = document.getElementById('markerStatus');
@@ -390,37 +388,9 @@
             }
         });
 
-        // ─── CRIAR CENA AR (AR.js) ───
-        function startAR() {
-            // Esconder overlay
-            document.getElementById('overlay').classList.add('hidden');
-            document.getElementById('hud').style.display = 'flex';
-            document.getElementById('back-btn').style.display = 'block';
-            document.getElementById('ar-container').style.display = 'block';
-
-            const container = document.getElementById('ar-container');
-
-            // Criar a cena A-Frame com AR.js
-            const scene = document.createElement('a-scene');
-            scene.setAttribute('embedded', '');
-            scene.setAttribute('vr-mode-ui', 'enabled: false');
-            scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono;');
-
-            // Câmara
-            const camera = document.createElement('a-entity');
-            camera.setAttribute('camera', '');
-            scene.appendChild(camera);
-
-            // ─── MARCADOR HIRO ───
-            const marker = document.createElement('a-marker');
-            marker.setAttribute('preset', 'hiro');
-            marker.setAttribute('marker-detector', '');
-
-            // ==========================================
-            // === NEXUS TOWER — TODO O CONTEÚDO 3D ===
-            // ==========================================
-
-            // Base platform
+        // ─── FUNÇÃO PARA CRIAR A TORRE (conteúdo reutilizável) ───
+        function buildTower(marker) {
+            // Base
             const base = document.createElement('a-cylinder');
             base.setAttribute('radius', '0.22');
             base.setAttribute('height', '0.015');
@@ -441,7 +411,7 @@
             ring1.setAttribute('ring-spin', 'speedY: 0.4');
             marker.appendChild(ring1);
 
-            // Main tower body
+            // Main body
             const body = document.createElement('a-box');
             body.setAttribute('width', '0.07');
             body.setAttribute('height', '0.55');
@@ -451,7 +421,7 @@
             body.setAttribute('neon-material', 'color: #001233; emissive: #003366; wireframe: false');
             marker.appendChild(body);
 
-            // Tower wireframe overlay
+            // Wireframe overlay
             const wireframe = document.createElement('a-box');
             wireframe.setAttribute('width', '0.075');
             wireframe.setAttribute('height', '0.56');
@@ -483,7 +453,7 @@
             ring3.setAttribute('ring-spin', 'speedY: 2; speedZ: 0.5');
             marker.appendChild(ring3);
 
-            // Tower apex
+            // Apex
             const apex = document.createElement('a-cone');
             apex.setAttribute('radius-bottom', '0.04');
             apex.setAttribute('radius-top', '0.005');
@@ -494,7 +464,7 @@
             apex.setAttribute('tower-pulse', 'speed: 3; minScale: 0.9; maxScale: 1.1');
             marker.appendChild(apex);
 
-            // Apex energy sphere
+            // Energy sphere
             const sphere = document.createElement('a-sphere');
             sphere.setAttribute('radius', '0.025');
             sphere.setAttribute('position', '0 0.7 0');
@@ -503,7 +473,7 @@
             sphere.setAttribute('tower-pulse', 'speed: 4');
             marker.appendChild(sphere);
 
-            // Side spires (4x)
+            // Spires
             const spirePositions = [
                 [0.09, 0.13, 0, 0, 0, -15],
                 [-0.09, 0.13, 0, 0, 0, 15],
@@ -522,7 +492,7 @@
                 marker.appendChild(spire);
             });
 
-            // Large outer orbit ring
+            // Outer ring
             const outerRing = document.createElement('a-torus');
             outerRing.setAttribute('radius', '0.35');
             outerRing.setAttribute('radius-tubular', '0.006');
@@ -533,7 +503,7 @@
             outerRing.setAttribute('ring-spin', 'speedY: 0.6');
             marker.appendChild(outerRing);
 
-            // === DRONES ===
+            // Drones
             const droneData = [
                 { radius: 0.32, speed: 1.1, yOffset: 0.25, bobAmp: 0.04, bobSpeed: 2.2, color: '#00fff7', label: 'cyan' },
                 { radius: 0.28, speed: -0.7, yOffset: 0.35, bobAmp: 0.06, bobSpeed: 1.8, tiltAmp: 15, color: '#ff00aa', label: 'magenta' },
@@ -542,7 +512,6 @@
             droneData.forEach(d => {
                 const drone = document.createElement('a-entity');
                 drone.setAttribute('orbit-drone', `radius: ${d.radius}; speed: ${d.speed}; yOffset: ${d.yOffset}; bobAmp: ${d.bobAmp}; bobSpeed: ${d.bobSpeed}; tiltAmp: ${d.tiltAmp || 12}`);
-                
                 const box = document.createElement('a-box');
                 box.setAttribute('width', '0.04');
                 box.setAttribute('height', '0.015');
@@ -550,7 +519,6 @@
                 box.setAttribute('color', d.color);
                 box.setAttribute('neon-material', `color: ${d.color}; emissive: ${d.color}`);
                 drone.appendChild(box);
-
                 if (d.label !== 'purple') {
                     for (let side of [-0.025, 0.025]) {
                         const rotor = document.createElement('a-box');
@@ -566,7 +534,7 @@
                 marker.appendChild(drone);
             });
 
-            // === FLOATING DATA SHARDS ===
+            // Shards
             const shardData = [
                 { radius: 0.18, speed: 2.5, yOffset: 0.5, bobAmp: 0.03, bobSpeed: 4, color: '#00fff7' },
                 { radius: 0.15, speed: -3, yOffset: 0.6, bobAmp: 0.02, bobSpeed: 5, tiltAmp: 5, color: '#ff00aa' }
@@ -593,24 +561,56 @@
             label.setAttribute('color', '#00fff7');
             label.setAttribute('width', '0.8');
             marker.appendChild(label);
+        }
 
-            scene.appendChild(marker);
+        // ─── INICIAR AR ───
+        function startAR() {
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('back-btn').style.display = 'block';
+            document.getElementById('ar-container').style.display = 'block';
+
+            const container = document.getElementById('ar-container');
+
+            // Cena AR.js
+            const scene = document.createElement('a-scene');
+            scene.setAttribute('embedded', '');
+            scene.setAttribute('vr-mode-ui', 'enabled: false');
+            scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono;');
+
+            // Câmara
+            const camera = document.createElement('a-entity');
+            camera.setAttribute('camera', '');
+            scene.appendChild(camera);
+
+            // --- MARCADOR HIRO ---
+            const markerHiro = document.createElement('a-marker');
+            markerHiro.setAttribute('preset', 'hiro');
+            markerHiro.setAttribute('marker-detector', '');
+            buildTower(markerHiro);
+            scene.appendChild(markerHiro);
+
+            // --- MARCADOR BARCODE (value=0) ---
+            const markerBarcode = document.createElement('a-marker');
+            markerBarcode.setAttribute('type', 'barcode');
+            markerBarcode.setAttribute('value', '0');
+            markerBarcode.setAttribute('marker-detector', '');
+            buildTower(markerBarcode);
+            scene.appendChild(markerBarcode);
+
             container.appendChild(scene);
         }
 
-        // ─── BOTÃO START COM PERMISSÃO DE CÂMARA ───
+        // ─── BOTÃO START ───
         document.getElementById('start-btn').addEventListener('click', async () => {
             try {
-                // Solicitar permissão da câmara (frontal)
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
                 });
-                stream.getTracks().forEach(track => track.stop()); // libertar para o AR.js
-
-                // Iniciar a experiência
+                stream.getTracks().forEach(track => track.stop());
                 startAR();
             } catch (error) {
-                console.error('❌ Erro ao aceder à câmara:', error);
+                console.error('❌ Erro na câmara:', error);
                 alert('⚠️ Não foi possível aceder à câmara.\nVerifique as permissões e tente novamente.');
             }
         });
