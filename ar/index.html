@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>NEXUS AR — Arquitetura Futurista</title>
+    <title>NEXUS AR — Portfólio Imersivo</title>
 
-    <!-- Estilos do portfólio (base que funciona) -->
     <style>
+        /* ─── RESET & VARIÁVEIS (INALTERADO) ─── */
         :root {
             --bg-color: #0a0a0c;
             --card-bg: rgba(20, 20, 25, 0.6);
@@ -15,8 +15,11 @@
             --accent-ar: #4facfe;
             --border-color: rgba(255, 255, 255, 0.05);
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -25,7 +28,6 @@
             height: 100vh;
             width: 100vw;
         }
-
         body::before {
             content: '';
             position: fixed;
@@ -47,12 +49,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            justify-content: flex-start;
+            padding: 2rem 1.5rem;
             text-align: center;
             transition: opacity 0.8s ease;
+            overflow-y: auto;
+            height: 100vh;
         }
-        #overlay.hidden { opacity: 0; pointer-events: none; }
+        #overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
 
         #overlay h1 {
             font-size: 2.5rem;
@@ -62,34 +69,38 @@
             background: linear-gradient(to right, #fff, var(--text-muted));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
+            margin-top: 0.5rem;
         }
         #overlay .subtitle {
             color: var(--text-muted);
             font-size: 1rem;
             letter-spacing: 1px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
+
         .marker-container {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
             backdrop-filter: blur(12px);
+            display: inline-block;
         }
         .marker-container img {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             border: 2px solid var(--accent-ar);
             border-radius: 8px;
             image-rendering: pixelated;
         }
         .marker-container .label {
             color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            margin-top: 0.4rem;
         }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -105,11 +116,79 @@
             border: 1px solid var(--accent-ar);
             cursor: pointer;
             font-family: inherit;
+            text-decoration: none;
         }
         .btn:hover {
             background: var(--accent-ar);
             color: #000;
             box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+        }
+        .btn-start {
+            margin-bottom: 2rem;
+        }
+
+        /* ─── CARDS DOS PROJETOS ─── */
+        .projects-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+            margin: 1rem auto 2rem;
+        }
+        .project-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            flex: 1 1 260px;
+            max-width: 320px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+        .project-card:hover {
+            border-color: var(--accent-ar);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .project-card .card-tag {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-ar);
+            border: 1px solid rgba(79,172,254,0.2);
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 0.6rem;
+        }
+        .project-card h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+        }
+        .project-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+        .project-card .btn-small {
+            padding: 0.4rem 1.2rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .footer-info {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            margin-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            width: 100%;
+            max-width: 700px;
         }
 
         /* ─── HUD ─── */
@@ -179,21 +258,49 @@
             height: 100vh;
             display: none;
         }
+
+        /* ─── RESPONSIVO ─── */
+        @media (max-width: 700px) {
+            #overlay h1 { font-size: 2rem; }
+            .project-card { flex: 1 1 100%; max-width: 100%; }
+            .marker-container img { width: 90px; height: 90px; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ─── OVERLAY ─── -->
+    <!-- ─── OVERLAY (PÁGINA INICIAL) ─── -->
     <div id="overlay">
         <h1>NEXUS AR</h1>
         <p class="subtitle">Arquitetura Futurista em Realidade Aumentada</p>
 
         <div class="marker-container">
-            <img src="../assets/markers/nexus-marker.png" alt="Marcador NEXUS" />
+            <!-- CAMINHO CORRIGIDO: sem "../" -->
+            <img src="assets/markers/nexus-marker.png" alt="Marcador NEXUS" />
             <p class="label">📌 Imprime ou exibe este marcador</p>
         </div>
 
-        <button id="start-btn" class="btn">▶ INICIAR EXPERIÊNCIA AR</button>
+        <button id="start-btn" class="btn btn-start">▶ INICIAR EXPERIÊNCIA AR</button>
+
+        <!-- ─── OUTROS PROJETOS ─── -->
+        <div class="projects-row">
+            <div class="project-card">
+                <span class="card-tag">📱 AUGMENTED REALITY</span>
+                <h3>🐾 AR Animal Care</h3>
+                <p>Cuide de um animal 3D com interações por toque e marcador personalizado.</p>
+                <a href="./AR/index.html" class="btn btn-small">Abrir Projeto →</a>
+            </div>
+            <div class="project-card">
+                <span class="card-tag">🥽 VIRTUAL REALITY</span>
+                <h3>🤖 VR Gundam Hangar</h3>
+                <p>Explore cenários 360° e navegue por olhar num hangar espacial imersivo.</p>
+                <a href="./VR/index.html" class="btn btn-small">Abrir Projeto →</a>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            ✦ Projetos imersivos com A‑Frame, MindAR, AR.js e WebXR ✦
+        </div>
     </div>
 
     <!-- ─── HUD ─── -->
@@ -203,23 +310,17 @@
         <span class="hud-label">Aponte para o marcador</span>
     </div>
 
-    <a href="../index.html" id="back-btn">← Voltar ao Portfólio</a>
+    <button id="back-btn">← Voltar ao Portfólio</button>
 
     <!-- ─── CENA MINDAR ─── -->
-    <div id="ar-container">
-        <!-- O MindAR vai injetar a cena aqui -->
-    </div>
+    <div id="ar-container"></div>
 
     <!-- ─── SCRIPTS ─── -->
-    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- MindAR + A-Frame -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-aframe.prod.js"></script>
 
     <script>
-        // ─── REGISTAR COMPONENTES A-FRAME ───
-
-        // neon-material
+        // ─── REGISTAR COMPONENTES A-FRAME (INALTERADO) ───
         AFRAME.registerComponent('neon-material', {
             schema: {
                 color:     { type: 'color', default: '#00fff7' },
@@ -248,7 +349,6 @@
             }
         });
 
-        // orbit-drone
         AFRAME.registerComponent('orbit-drone', {
             schema: {
                 radius:    { default: 0.35 },
@@ -284,7 +384,6 @@
             }
         });
 
-        // tower-pulse
         AFRAME.registerComponent('tower-pulse', {
             schema: {
                 speed:    { default: 1.5 },
@@ -317,7 +416,6 @@
             }
         });
 
-        // ring-spin
         AFRAME.registerComponent('ring-spin', {
             schema: {
                 speedX: { default: 0 },
@@ -334,9 +432,17 @@
             }
         });
 
+        // ─── VARIÁVEIS GLOBAIS ───
+        let sceneInstance = null;
+        let mindarInstance = null;
+        let isArRunning = false;
+
         // ─── CRIAR CENA MINDAR ───
         function startAR() {
-            // Esconder overlay
+            // Se já estiver a correr, não faz nada
+            if (isArRunning) return;
+
+            // Esconder overlay e mostrar HUD
             document.getElementById('overlay').classList.add('hidden');
             document.getElementById('hud').style.display = 'flex';
             document.getElementById('back-btn').style.display = 'block';
@@ -344,8 +450,11 @@
 
             // Criar a cena A-Frame com MindAR
             const container = document.getElementById('ar-container');
+            // Limpar conteúdo anterior (caso exista)
+            container.innerHTML = '';
+
             const scene = document.createElement('a-scene');
-            scene.setAttribute('mindar-image', `imageTargetSrc: ../assets/markers/nexus-marker.png; autoStart: true;`);
+            scene.setAttribute('mindar-image', `imageTargetSrc: assets/markers/nexus-marker.png; autoStart: true;`);
             scene.setAttribute('embedded', '');
             scene.setAttribute('vr-mode-ui', 'enabled: false');
 
@@ -362,7 +471,6 @@
             // === NEXUS TOWER — TODO O CONTEÚDO 3D ===
             // ==========================================
 
-            // Base platform
             const base = document.createElement('a-cylinder');
             base.setAttribute('radius', '0.22');
             base.setAttribute('height', '0.015');
@@ -372,7 +480,6 @@
             base.setAttribute('tower-pulse', 'speed: 1.2');
             marker.appendChild(base);
 
-            // Platform ring
             const ring1 = document.createElement('a-torus');
             ring1.setAttribute('radius', '0.22');
             ring1.setAttribute('radius-tubular', '0.008');
@@ -383,7 +490,6 @@
             ring1.setAttribute('ring-spin', 'speedY: 0.4');
             marker.appendChild(ring1);
 
-            // Main tower body
             const body = document.createElement('a-box');
             body.setAttribute('width', '0.07');
             body.setAttribute('height', '0.55');
@@ -393,7 +499,6 @@
             body.setAttribute('neon-material', 'color: #001233; emissive: #003366; wireframe: false');
             marker.appendChild(body);
 
-            // Tower wireframe overlay
             const wireframe = document.createElement('a-box');
             wireframe.setAttribute('width', '0.075');
             wireframe.setAttribute('height', '0.56');
@@ -403,7 +508,6 @@
             wireframe.setAttribute('neon-material', 'color: #00fff7; emissive: #00fff7; wireframe: true; opacity: 0.6');
             marker.appendChild(wireframe);
 
-            // Mid ring
             const ring2 = document.createElement('a-torus');
             ring2.setAttribute('radius', '0.08');
             ring2.setAttribute('radius-tubular', '0.007');
@@ -414,7 +518,6 @@
             ring2.setAttribute('ring-spin', 'speedY: -1.2; speedX: 0.3');
             marker.appendChild(ring2);
 
-            // Upper ring
             const ring3 = document.createElement('a-torus');
             ring3.setAttribute('radius', '0.06');
             ring3.setAttribute('radius-tubular', '0.006');
@@ -425,7 +528,6 @@
             ring3.setAttribute('ring-spin', 'speedY: 2; speedZ: 0.5');
             marker.appendChild(ring3);
 
-            // Tower apex
             const apex = document.createElement('a-cone');
             apex.setAttribute('radius-bottom', '0.04');
             apex.setAttribute('radius-top', '0.005');
@@ -436,7 +538,6 @@
             apex.setAttribute('tower-pulse', 'speed: 3; minScale: 0.9; maxScale: 1.1');
             marker.appendChild(apex);
 
-            // Apex energy sphere
             const sphere = document.createElement('a-sphere');
             sphere.setAttribute('radius', '0.025');
             sphere.setAttribute('position', '0 0.7 0');
@@ -445,7 +546,6 @@
             sphere.setAttribute('tower-pulse', 'speed: 4');
             marker.appendChild(sphere);
 
-            // Side spires (4x)
             const spirePositions = [
                 [0.09, 0.13, 0, 0, 0, -15],
                 [-0.09, 0.13, 0, 0, 0, 15],
@@ -464,7 +564,6 @@
                 marker.appendChild(spire);
             });
 
-            // Large outer orbit ring
             const outerRing = document.createElement('a-torus');
             outerRing.setAttribute('radius', '0.35');
             outerRing.setAttribute('radius-tubular', '0.006');
@@ -475,7 +574,7 @@
             outerRing.setAttribute('ring-spin', 'speedY: 0.6');
             marker.appendChild(outerRing);
 
-            // === DRONES ===
+            // DRONES
             const droneData = [
                 { radius: 0.32, speed: 1.1, yOffset: 0.25, bobAmp: 0.04, bobSpeed: 2.2, color: '#00fff7', label: 'cyan' },
                 { radius: 0.28, speed: -0.7, yOffset: 0.35, bobAmp: 0.06, bobSpeed: 1.8, tiltAmp: 15, color: '#ff00aa', label: 'magenta' },
@@ -508,7 +607,7 @@
                 marker.appendChild(drone);
             });
 
-            // === FLOATING DATA SHARDS ===
+            // SHARDS
             const shardData = [
                 { radius: 0.18, speed: 2.5, yOffset: 0.5, bobAmp: 0.03, bobSpeed: 4, color: '#00fff7' },
                 { radius: 0.15, speed: -3, yOffset: 0.6, bobAmp: 0.02, bobSpeed: 5, tiltAmp: 5, color: '#ff00aa' }
@@ -527,7 +626,6 @@
                 marker.appendChild(shard);
             });
 
-            // Label
             const label = document.createElement('a-text');
             label.setAttribute('value', 'NEXUS TOWER');
             label.setAttribute('position', '0 0.82 0');
@@ -539,16 +637,67 @@
             scene.appendChild(marker);
             container.appendChild(scene);
 
-            // Iniciar MindAR
-            const mindar = scene.querySelector('[mindar-image]');
-            mindar.addEventListener('load', () => {
-                mindar.start();
-            });
+            // Guardar referências
+            sceneInstance = scene;
+            mindarInstance = scene.querySelector('[mindar-image]');
+            isArRunning = true;
+
+            // Iniciar MindAR com tratamento de erro
+            try {
+                mindarInstance.addEventListener('load', () => {
+                    mindarInstance.start();
+                    console.log('✅ MindAR iniciado com sucesso.');
+                });
+                mindarInstance.addEventListener('error', (err) => {
+                    console.error('❌ Erro no MindAR:', err);
+                    alert('Não foi possível iniciar a AR. Verifique a câmara e o marcador.');
+                    closeAR();
+                });
+            } catch (e) {
+                console.error('❌ Erro ao iniciar MindAR:', e);
+                alert('Erro ao iniciar a AR. Tente novamente.');
+                closeAR();
+            }
         }
 
-        // ─── BOTÃO START ───
-        document.getElementById('start-btn').addEventListener('click', startAR);
-    </script>
+        // ─── FECHAR AR (VOLTAR AO PORTFÓLIO) ───
+        function closeAR() {
+            if (mindarInstance) {
+                try {
+                    mindarInstance.stop();
+                } catch(e) { /* ignorar */ }
+            }
+            if (sceneInstance && sceneInstance.parentNode) {
+                sceneInstance.parentNode.removeChild(sceneInstance);
+            }
+            // Limpar o container
+            const container = document.getElementById('ar-container');
+            if (container) container.innerHTML = '';
+            // Resetar variáveis
+            sceneInstance = null;
+            mindarInstance = null;
+            isArRunning = false;
 
+            // Ocultar HUD e botão, mostrar overlay
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'none';
+            document.getElementById('ar-container').style.display = 'none';
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+
+        // ─── EVENTOS ───
+        document.getElementById('start-btn').addEventListener('click', startAR);
+        document.getElementById('back-btn').addEventListener('click', closeAR);
+
+        // Se o utilizador sair da página, tenta parar a AR (boa prática)
+        window.addEventListener('beforeunload', function() {
+            if (mindarInstance) {
+                try { mindarInstance.stop(); } catch(e) {}
+            }
+        });
+
+        console.log('🚀 NEXUS AR — Pronto para iniciar.');
+        console.log('📌 Certifique-se de que o marcador está em assets/markers/nexus-marker.png');
+    </script>
 </body>
 </html>
