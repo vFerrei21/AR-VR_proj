@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>NEXUS AR — Arquitetura Futurista</title>
 
+    <!-- A-Frame (versão compatível com AR.js 2.2.2) -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- AR.js -->
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@2.2.2/aframe/build/aframe-ar.js"></script>
+
     <!-- Estilos do portfólio (base que funciona) -->
     <style>
         :root {
@@ -241,16 +246,16 @@
         <!-- A cena será injetada aqui pelo JavaScript -->
     </div>
 
-    <!-- ─── SCRIPTS ─── -->
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- AR.js (funcional) -->
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@2.2.2/aframe/build/aframe-ar.js"></script>
-
+    <!-- ─── SCRIPTS (componentes personalizados) ─── -->
     <script>
         // ─── REGISTAR COMPONENTES A-FRAME ───
 
-        // neon-material
+        // Helper: degToRad (para compatibilidade com A-Frame 1.2.0)
+        function degToRad(deg) {
+            return deg * Math.PI / 180;
+        }
+
+        // neon-material (adaptado para A-Frame 1.2.0)
         AFRAME.registerComponent('neon-material', {
             schema: {
                 color:     { type: 'color', default: '#00fff7' },
@@ -279,7 +284,7 @@
             }
         });
 
-        // orbit-drone
+        // orbit-drone (com degToRad)
         AFRAME.registerComponent('orbit-drone', {
             schema: {
                 radius:    { default: 0.35 },
@@ -311,7 +316,7 @@
                      Math.sin(this.angle)
                 );
                 this.el.object3D.rotation.y = heading;
-                this.el.object3D.rotation.z = Math.sin(this.t * d.bobSpeed) * THREE.MathUtils.degToRad(d.tiltAmp);
+                this.el.object3D.rotation.z = Math.sin(this.t * d.bobSpeed) * degToRad(d.tiltAmp);
             }
         });
 
@@ -593,7 +598,7 @@
             container.appendChild(scene);
         }
 
-        // ─── BOTÃO START COM PERMISSÃO DE CÂMERA ───
+        // ─── BOTÃO START COM PERMISSÃO DE CÂMARA ───
         document.getElementById('start-btn').addEventListener('click', async () => {
             try {
                 // Solicitar permissão da câmara (frontal)
