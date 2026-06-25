@@ -251,10 +251,20 @@
     <div id="ar-container"></div>
 
     <script>
-        // ─── HELPER: degToRad para A-Frame 1.2.0 ───
-        function degToRad(deg) { return deg * Math.PI / 180; }
+        // ============================================================
+        // LOGS DETALHADOS PARA DIAGNÓSTICO
+        // ============================================================
+        console.log('🚀 [LOG] Script principal iniciado.');
+
+        // ─── HELPER: degToRad ───
+        function degToRad(deg) { 
+            const rad = deg * Math.PI / 180;
+            console.log(`📐 [LOG] degToRad(${deg}) = ${rad}`);
+            return rad;
+        }
 
         // ─── REGISTAR COMPONENTES ───
+        console.log('📦 [LOG] A registar componentes A-Frame...');
 
         // neon-material
         AFRAME.registerComponent('neon-material', {
@@ -265,12 +275,20 @@
                 wireframe: { default: false }
             },
             init: function () {
-                this.el.addEventListener('loaded', () => this.applyMaterial());
+                console.log('🔧 [LOG] neon-material.init() chamado para:', this.el);
+                this.el.addEventListener('loaded', () => {
+                    console.log('🔄 [LOG] neon-material: elemento carregado, a aplicar material.');
+                    this.applyMaterial();
+                });
                 this.applyMaterial();
             },
             applyMaterial: function () {
                 const mesh = this.el.getObject3D('mesh');
-                if (!mesh) return;
+                if (!mesh) {
+                    console.warn('⚠️ [LOG] neon-material: nenhuma mesh encontrada em', this.el);
+                    return;
+                }
+                console.log('🎨 [LOG] neon-material: aplicando material a mesh.');
                 mesh.traverse(node => {
                     if (node.isMesh && node.material) {
                         node.material.color.set(this.data.color);
@@ -284,6 +302,7 @@
                 });
             }
         });
+        console.log('✅ [LOG] Componente neon-material registado.');
 
         // orbit-drone
         AFRAME.registerComponent('orbit-drone', {
@@ -296,6 +315,7 @@
                 tiltAmp:   { default: 12 }
             },
             init: function () {
+                console.log('🚁 [LOG] orbit-drone.init() para:', this.el);
                 this.angle = Math.random() * Math.PI * 2;
                 this.t = 0;
             },
@@ -317,6 +337,7 @@
                 this.el.object3D.rotation.z = Math.sin(this.t * d.bobSpeed) * degToRad(d.tiltAmp);
             }
         });
+        console.log('✅ [LOG] Componente orbit-drone registado.');
 
         // tower-pulse
         AFRAME.registerComponent('tower-pulse', {
@@ -326,6 +347,7 @@
                 maxScale: { default: 1.03 }
             },
             init: function () {
+                console.log('💠 [LOG] tower-pulse.init() para:', this.el);
                 this.t = 0;
                 this.baseColor = new THREE.Color('#00fff7');
                 this.altColor  = new THREE.Color('#7700ff');
@@ -350,6 +372,7 @@
                 }
             }
         });
+        console.log('✅ [LOG] Componente tower-pulse registado.');
 
         // ring-spin
         AFRAME.registerComponent('ring-spin', {
@@ -367,13 +390,16 @@
                 r.z += dt * this.data.speedZ;
             }
         });
+        console.log('✅ [LOG] Componente ring-spin registado.');
 
         // ─── DETECTOR DE MARCADOR ───
         AFRAME.registerComponent('marker-detector', {
             init: function() {
+                console.log('🔍 [LOG] marker-detector.init() para:', this.el);
                 const statusDiv = document.getElementById('markerStatus');
                 let detected = false;
                 this.el.addEventListener('markerFound', () => {
+                    console.log('🏛️ [LOG] EVENTO markerFound DISPARADO!');
                     if (!detected) {
                         detected = true;
                         statusDiv.classList.add('visible');
@@ -381,15 +407,19 @@
                     }
                 });
                 this.el.addEventListener('markerLost', () => {
+                    console.log('🔴 [LOG] EVENTO markerLost DISPARADO!');
                     detected = false;
                     statusDiv.classList.remove('visible');
                     console.log('🔴 Torre perdida');
                 });
             }
         });
+        console.log('✅ [LOG] Componente marker-detector registado.');
 
-        // ─── FUNÇÃO PARA CRIAR A TORRE (conteúdo reutilizável) ───
+        // ─── FUNÇÃO PARA CRIAR A TORRE ───
         function buildTower(marker) {
+            console.log('🏗️ [LOG] buildTower() a construir torre para:', marker);
+
             // Base
             const base = document.createElement('a-cylinder');
             base.setAttribute('radius', '0.22');
@@ -561,59 +591,79 @@
             label.setAttribute('color', '#00fff7');
             label.setAttribute('width', '0.8');
             marker.appendChild(label);
+
+            console.log('✅ [LOG] buildTower() concluída para:', marker);
         }
 
         // ─── INICIAR AR ───
         function startAR() {
+            console.log('▶️ [LOG] startAR() chamada!');
+
+            // Esconder overlay e mostrar HUD
             document.getElementById('overlay').classList.add('hidden');
             document.getElementById('hud').style.display = 'flex';
             document.getElementById('back-btn').style.display = 'block';
             document.getElementById('ar-container').style.display = 'block';
 
             const container = document.getElementById('ar-container');
+            console.log('📦 [LOG] container AR:', container);
 
             // Cena AR.js
             const scene = document.createElement('a-scene');
             scene.setAttribute('embedded', '');
             scene.setAttribute('vr-mode-ui', 'enabled: false');
             scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono;');
+            console.log('🔧 [LOG] Cena AR criada:', scene);
 
             // Câmara
             const camera = document.createElement('a-entity');
             camera.setAttribute('camera', '');
             scene.appendChild(camera);
+            console.log('📷 [LOG] Câmara adicionada à cena.');
 
             // --- MARCADOR HIRO ---
             const markerHiro = document.createElement('a-marker');
             markerHiro.setAttribute('preset', 'hiro');
             markerHiro.setAttribute('marker-detector', '');
+            console.log('📍 [LOG] A construir torre para HIRO...');
             buildTower(markerHiro);
             scene.appendChild(markerHiro);
+            console.log('✅ [LOG] Marcador HIRO adicionado à cena.');
 
             // --- MARCADOR BARCODE (value=0) ---
             const markerBarcode = document.createElement('a-marker');
             markerBarcode.setAttribute('type', 'barcode');
             markerBarcode.setAttribute('value', '0');
             markerBarcode.setAttribute('marker-detector', '');
+            console.log('📍 [LOG] A construir torre para BARCODE...');
             buildTower(markerBarcode);
             scene.appendChild(markerBarcode);
+            console.log('✅ [LOG] Marcador BARCODE adicionado à cena.');
 
             container.appendChild(scene);
+            console.log('🏁 [LOG] Cena AR completa, adicionada ao container.');
         }
 
         // ─── BOTÃO START ───
         document.getElementById('start-btn').addEventListener('click', async () => {
+            console.log('🖱️ [LOG] Botão START clicado!');
             try {
+                console.log('📷 [LOG] A solicitar permissão da câmara...');
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
                 });
+                console.log('✅ [LOG] Permissão da câmara obtida, a parar tracks...');
                 stream.getTracks().forEach(track => track.stop());
+                console.log('✅ [LOG] Tracks paradas, a chamar startAR()...');
                 startAR();
             } catch (error) {
-                console.error('❌ Erro na câmara:', error);
+                console.error('❌ [LOG] Erro na câmara:', error);
                 alert('⚠️ Não foi possível aceder à câmara.\nVerifique as permissões e tente novamente.');
             }
         });
+
+        console.log('✅ [LOG] Script principal carregado e pronto.');
+        console.log('🔍 [LOG] A aguardar clique no botão START.');
     </script>
 </body>
 </html>
